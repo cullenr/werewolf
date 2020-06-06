@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents { 
+    function isUser(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isAnyUser() {
+      return request.auth.uid != null;
+    }
+
+    match /games/{game} {
+      allow read:   if isAnyUser();
+      allow create: if isAnyUser();
+      allow update: if isUser(resource.data.host);
+      allow delete: if false;   // these get cleaned automatically
+
+
+      function isGhost() {
+        return get(/databases/$(database)/documents/games/$(game)/players/$(request.auth.uid)).data.isDead == true;
+      }
+      function isGameOpen() {
+        return get(/databases/$(database)/documents/games/$(game)).data.isOpen == true;
+      }
+
+      // this forms the game-global messaging channel - private messages are 
+      // managed inside the `players` collection
+      match /messages/{message} {
+          allow read: if request.auth.uid in resource.data.viewers;
+          allow write: if false;
+      }
+
+      // players can join the game if the game is 'open' for new players
+      // the player doc is public.
+      match /players/{userId} {
+        allow read: if isAnyUser();
+        allow write: if false;
+        // override create
+        // full write is not granted, this would allow a user to self revive
+        allow create: if isUser(userId) && isGameOpen();
+      }
+
+      // rounds are created by cloud functions
+      // 1. when the host calls the start-game rpc
+      // 2. when all votes have been cast at the end of the previous round
+      match /rounds/{round} {
+        allow read: if isAnyUser();
+        allow write: if false;
+      }
+
+      // votes are added via the 'vote' rpc. The vote document contains a list 
+      // of players allowed to see its contents which changes every round. This 
+      // list can only be set by the cloud functions to stop cheaters!
+      match /rounds/{round}/votes/{userId} {
+        allow read: if request.auth.uid in resource.data.viewers;
+        allow write: if false;
+      }
+
+      // Write to this collection are made by RPC calls.
+      // Roles are assigned at the start of the game and in some special cases
+      // the game rules allow a player to swap roles with another.
+      match /roles/{userId} {
+        allow read: if isUser(userId) || isGhost();
+        allow write: if false;
+      }
+    }
+  }
+}
