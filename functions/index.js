@@ -72,7 +72,7 @@ exports.startGame = functions.https.onCall(async (data, context) => {
         // we will use set here, we are not able to use a transaction here so we
         // will try to make this code indempotent incase this function is called
         // again.
-        return roles.doc(e.player.id).set({role: e.role});
+        return roles.doc(e.player.id).set(e.role);
     });
     await Promise.all(rolesPromises);
 
