@@ -231,7 +231,7 @@ class NightRound extends GameRound {
         // visit each role in this game in their priority order
         for (const role of this.orderedRoles) {
             const nominations = this.getNominations(role.type);
-            roles[role.type].process(nominations, this);
+            role.process(nominations, this);
         }
 
         // if we have a game over this could be undefined
@@ -250,8 +250,11 @@ class NightRound extends GameRound {
 
     get orderedRoles() {
         const enabledRoles = this.players.reduce((acc, player) => {
-            const role = this.roleMap[player]
-            acc[role.type] = role;
+            // we are mapping to the server side roles here too as these
+            // contain the proirity and process functions that are not
+            // serialised to the db
+            const roleTpe = this.roleMap[player].type;
+            acc[roleType] = roles[roleType];
             return acc;
         }, {});
 

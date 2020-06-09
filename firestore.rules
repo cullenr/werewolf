@@ -23,8 +23,7 @@ service cloud.firestore {
         return get(/databases/$(database)/documents/games/$(game)).data.isOpen == true;
       }
 
-      // this forms the game-global messaging channel - private messages are 
-      // managed inside the `players` collection
+      // this forms the game-specific messaging channel
       match /messages/{message} {
           allow read: if request.auth.uid in resource.data.viewers;
           allow write: if false;
@@ -36,7 +35,11 @@ service cloud.firestore {
         allow read: if isAnyUser();
         allow write: if false;
         // override create
-        // full write is not granted, this would allow a user to self revive
+        // full write is not granted, this would allow a user to replace
+        // themselves with another.
+        // TODO: make this host accesible only, they will be sent a message 
+        // on the message bus requesting access for a user where they can 
+        // grant access. For now users add themselves.
         allow create: if isUser(userId) && isGameOpen();
       }
 
