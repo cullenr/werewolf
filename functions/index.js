@@ -122,47 +122,42 @@ exports.castVote = functions.https.onCall((data, context) => {
             .limit(1)
             .get()
     const players = round.data().players;
-
+    const ghosts  = round.data().ghosts || [];
     // check if the voter is allwed to vote
     if(!players.contains(uid)) {
         throw new functions.https.HttpsError('failed-precondition',
                 'user is not allowed to vote on this round.');
     }
 
-    // create or update the vote for this player
-    const viewers = round.data().ghosts || [];
-    viewers.push(uid);
-    await round.collection('votes').doc(`${uid}`).set({
+    await round.doc(`votes/${uid}`).set({
         nomineed: data.nominee,
-        viewers: viewers
+        viewers: ghosts.concat(uid)
     });
 
     // check if this was the last vote - this is a small collection so this
     // approach is not too bad.
     const votes = round.collection('votes').get();
-    if(allVotes.size === players.length) {
-        const roles = await db.collection(`games/${gameId}/roles`).get();
-        const rolesMap = querySnapshotToMap(roles);
-        const votesMap = querySnapshotToMap(votes);
-        const outcome  = round.data().type === 'night'
-                ? endNightRound(rolesMap, votesMap, players)
-                : endDayRound(rolesMap, votesMap, players);
+    if(votes.size === players.length) {
+        const roles     = await db.collection(`games/${gameId}/roles`).get();
+        const rolesMap  = querySnapshotToMap(roles);
+        const votesMap  = querySnapshotToMap(votes);
+        const roundType = round.data().type;
+        const gamelogic = roundType === 'night'
+                ? new game.NightRound(players, ghosts, rolesMap, votesMap)
+                : new game.DayRound(players, ghosts, rolesMap, votesMap);
 
         // add all the events of the day/night to the game message bus
-        const messages = db.collection(`games/${gameId}/messages`)
-        for(let message of outcome.messages) {
-            await messages.add(message);
-        }
+        const messages  = db.collection(`games/${gameId}/messages`)
+        const promises  = gamelogic.message.map(messages.add);
+        await Promise.all(promises);
 
-        // if we do not have a game over start a new round
-        // TODO: make this a bit nicer!
-        const gameOver = results.messages.find(e => e.type === 'game-over');
-        if(!gameOver) {
+        // start a new round if we do not have a gameover
+        if(!gamelogic.gameover) {
             await db.collection(`games/${gameId}/rounds`).add({
-                type: round.data().type === 'night' ? 'day' : 'night', 
+                type: roundType === 'night' ? 'day' : 'night', 
                 number: parseInt(round.data().number) + 1;
-                players: outcome.players,
-                ghosts: outcome.ghosts,
+                players: gamelogic.players,
+                ghosts: gamelogic.ghosts,
             })
         }
     }

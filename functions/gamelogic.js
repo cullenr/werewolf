@@ -111,7 +111,17 @@ class GameRound {
         this.eliminations = [];
         this.resurections = [];
 
+        // run the round specific logic
         this.update();
+
+        // automatically add the game-over message
+        const winners = this.checkWinners();
+        if (winners) {
+            this.addPublicMessage('game-over', {victors: winners});
+            this.gameover = true;
+        } else {
+            this.gameover = false;
+        }
     }
 
     /**
@@ -196,7 +206,6 @@ class DayRound extends GameRound {
     constructor(players, ghosts, voteMap, roleMap) {
         super(players, ghosts, voteMap, roleMap);
     }
-
 
     update() {
         const votesArr = Object.values(this.voteMap).map(e => e.nominee);
