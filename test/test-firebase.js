@@ -123,33 +123,55 @@ describe('Werewolf firestore rules', () => {
     });
 
     describe('use a whitelist for vote reading', () => {
+        const docPath = 'games/a/votes/v1';
         beforeEach('setting up round', async () => {
             await adminApp()
-                .doc('games/a')
-                .set({isOpen: true});
-            await adminApp()
-                .doc('games/a/rounds/a')
-                .set({name: 'day 1'});
-            await adminApp()
-                .doc('games/a/rounds/a/votes/p1')
+                .doc(docPath)
                 .set({viewers: ['p1', 'p2']});
         });
 
         it('that rejects unauthenticated users', async () => {
             await firebase.assertFails(authedApp(null)
-                .doc(`games/a/rounds/a/votes/p1`)
+                .doc(docPath)
                 .get())
         });
 
         it('that rejects non owning users', async () => {
             await firebase.assertFails(authedApp({uid: 'p0'})
-                .doc(`games/a/rounds/a/votes/p1`)
+                .doc(docPath)
                 .get())
         });
 
         it('that accepts approved users', async () => {
             await firebase.assertSucceeds(authedApp({uid: 'p2'})
-                .doc(`games/a/rounds/a/votes/p1`)
+                .doc(docPath)
+                .get())
+        });
+    });
+
+    describe('use a whitelist for message reading', () => {
+        const docPath = 'games/a/messages/m1';
+        beforeEach('setting up round', async () => {
+            await adminApp()
+                .doc(docPath)
+                .set({viewers: ['p1', 'p2']});
+        });
+
+        it('that rejects unauthenticated users', async () => {
+            await firebase.assertFails(authedApp(null)
+                .doc(docPath)
+                .get())
+        });
+
+        it('that rejects non owning users', async () => {
+            await firebase.assertFails(authedApp({uid: 'p0'})
+                .doc(docPath)
+                .get())
+        });
+
+        it('that accepts approved users', async () => {
+            await firebase.assertSucceeds(authedApp({uid: 'p2'})
+                .doc(docPath)
                 .get())
         });
     });
@@ -162,42 +184,6 @@ describe('Werewolf firestore rules', () => {
 
         it('by rejecting unauthenticated users', async () => {
             await firebase.assertFails(authedApp(null) .doc(docPath)
-                .get())
-        });
-
-        it('by rejecting non-owning users', async () => {
-            await firebase.assertFails(authedApp({uid: 'p0'})
-                .doc(docPath)
-                .get())
-        });
-
-        it('by accepting owning users', async () => {
-            await firebase.assertSucceeds(authedApp({uid: 'p1'})
-                .doc(docPath)
-                .get())
-        });
-
-        it('by accepting non owning, dead users', async () => {
-            await adminApp()
-                .doc('games/a/players/p0')
-                .set({isDead: true});
-
-            await firebase.assertSucceeds(authedApp({uid: 'p0'})
-                .doc(docPath)
-                .get())
-        });
-    });
-    describe('manages private messaging', () => {
-        const docPath = 'games/a/players/p1/messages/m1';
-        beforeEach('setting up round', async () => {
-            await adminApp()
-                .doc(docPath)
-                .set({text: 'the Kernals secret spices are...'});
-        });
-
-        it('by rejecting unauthenticated users', async () => {
-            await firebase.assertFails(authedApp(null)
-                .doc(docPath)
                 .get())
         });
 

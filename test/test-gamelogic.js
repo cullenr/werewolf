@@ -3,6 +3,7 @@ const assert = chai.assert;
 
 const game = require('../functions/gamelogic.js');
 
+const GameRound = game.test.GameRound;
 
 describe('class GameRound', () => {
     describe('checkWinners method', () => {
@@ -21,8 +22,7 @@ describe('class GameRound', () => {
                 p3: {type: 'VILLAGER', team: 'good'},
                 p4: {type: 'VILLAGER', team: 'good'}
             };
-            const round = new game.test
-                .GameRound(players, ghosts, voteMap, roleMap);
+            const round = new GameRound(players, ghosts, voteMap, roleMap);
             const res = round.checkWinners();
 
             assert.isUndefined(res);
@@ -41,8 +41,7 @@ describe('class GameRound', () => {
                 p3: {type: 'VILLAGER', team: 'good'},
                 p4: {type: 'VILLAGER', team: 'good'}
             };
-            const round = new game.test
-                .GameRound(players, ghosts, voteMap, roleMap);
+            const round = new GameRound(players, ghosts, voteMap, roleMap);
             const res = round.checkWinners();
 
             assert.equal(res, 'good');
@@ -57,8 +56,7 @@ describe('class GameRound', () => {
             const roleMap = {
                 p1: {type: 'WEREWOLF', team: 'bad'},
             };
-            const round = new game.test
-                .GameRound(players, ghosts, voteMap, roleMap);
+            const round = new GameRound(players, ghosts, voteMap, roleMap);
             const res = round.checkWinners();
 
             assert.equal(res, 'bad');
@@ -66,8 +64,13 @@ describe('class GameRound', () => {
     });
 
     describe('eliminate method', () => {
+        const roleMap = {
+            p1: {type: 'VILLAGER', team: 'good'},
+            p2: {type: 'VILLAGER', team: 'good'},
+            p3: {type: 'VILLAGER', team: 'good'}
+        };
         it('eliminates players', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.eliminate('p1');
 
             assert.equal(round.players.length, 1)
@@ -80,7 +83,7 @@ describe('class GameRound', () => {
 
         })
         it('eliminates players only once', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.eliminate('p1');
             round.eliminate('p1');
 
@@ -93,7 +96,7 @@ describe('class GameRound', () => {
             assert.equal(round.resurections.length, 0)
         })
         it('eliminates resurected players only once', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.eliminate('p1');
             round.resurect('p1');
             round.eliminate('p1');
@@ -108,8 +111,13 @@ describe('class GameRound', () => {
         })
     })
     describe('resurect method', () => {
+        const roleMap = {
+            p1: {type: 'VILLAGER', team: 'good'},
+            p2: {type: 'VILLAGER', team: 'good'},
+            p3: {type: 'VILLAGER', team: 'good'}
+        };
         it('resurects players', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.resurect('p3');
 
             assert.equal(round.players.length, 3)
@@ -123,7 +131,7 @@ describe('class GameRound', () => {
             assert.includeMembers(round.players, ['p3'])
         })
         it('resurects players only once', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.resurect('p3');
             round.resurect('p3');
 
@@ -138,7 +146,7 @@ describe('class GameRound', () => {
             assert.includeMembers(round.players, ['p3'])
         })
         it('resurects eliminated players only once', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.resurect('p3');
             round.eliminate('p3');
             round.resurect('p3');
@@ -178,25 +186,31 @@ describe('class GameRound', () => {
         })
     })
     describe('private messaging methods', () => {
+        const roleMap = {
+            p1: {type: 'VILLAGER', team: 'good'},
+            p2: {type: 'VILLAGER', team: 'good'},
+            p3: {type: 'VILLAGER', team: 'good'},
+            p4: {type: 'VILLAGER', team: 'good'},
+        };
         it('adds ghosts to the private messages when requested', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.addPrivateMessage('p1', 'test', 'value')
             const messages = round.messages;
 
-            assert.equal(messages.length, 1);
-            assert.deepEqual(messages, [{
+            assert.equal(messages.length, 2);
+            assert.includeDeepMembers(messages, [{
                 to: ['p1', 'p3'],
                 type:'test',
                 content: 'value'
             }]);
         })
         it('orders the recipients', () => {
-            const round = new game.test.GameRound(['p4', 'p2'], ['p1', 'p3']);
+            const round = new GameRound(['p4', 'p2'], ['p1', 'p3'], null, roleMap);
             round.addPrivateMessage('p4', 'test', 'value')
             const messages = round.messages;
 
-            assert.equal(messages.length, 1);
-            assert.deepEqual(messages, [{
+            assert.equal(messages.length, 2);
+            assert.includeDeepMembers(messages, [{
                 to: ['p1', 'p3', 'p4'],
                 type:'test',
                 content: 'value'
@@ -204,25 +218,31 @@ describe('class GameRound', () => {
         })
     })
     describe('public messaging methods', () => {
+        const roleMap = {
+            p1: {type: 'VILLAGER', team: 'good'},
+            p2: {type: 'VILLAGER', team: 'good'},
+            p3: {type: 'VILLAGER', team: 'good'},
+            p4: {type: 'VILLAGER', team: 'good'}
+        };
         it('adds ghosts to the private messages when requested', () => {
-            const round = new game.test.GameRound(['p1', 'p2'], ['p3']);
+            const round = new GameRound(['p1', 'p2'], ['p3'], null, roleMap);
             round.addPublicMessage('test', 'value')
             const messages = round.messages;
 
-            assert.equal(messages.length, 1);
-            assert.deepEqual(messages, [{
+            assert.equal(messages.length, 2);
+            assert.includeDeepMembers(messages, [{
                 to: ['p1', 'p2', 'p3'],
                 type:'test',
                 content: 'value'
             }]);
         })
         it('orders the recipients', () => {
-            const round = new game.test.GameRound(['p4', 'p2'], ['p1', 'p3']);
+            const round = new GameRound(['p4', 'p2'], ['p1', 'p3'], null, roleMap);
             round.addPublicMessage('test', 'value')
             const messages = round.messages;
 
-            assert.equal(messages.length, 1);
-            assert.deepEqual(messages, [{
+            assert.equal(messages.length, 2);
+            assert.includeDeepMembers(messages, [{
                 to: ['p1', 'p2', 'p3', 'p4'],
                 type:'test',
                 content: 'value'

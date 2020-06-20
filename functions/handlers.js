@@ -28,7 +28,7 @@ function wrapError(func) {
 }
 
 
-const querySnapshotToMap = qs.docs.reduce((acc, val) => {
+const querySnapshotToMap = qs => qs.docs.reduce((acc, val) => {
     acc[val.id] = val.data();
     return acc;
 }, {});
@@ -49,7 +49,7 @@ const startGame = da => (async (data, context) => {
     checkAuth(context);
     checkStringParam(data, 'gameId');
 
-    const gameId          = sanitisePathParam(data.gameId);
+    const gameId          = data.gameId;
     const players         = await da.listPlayersIds(gameId);
     const playersAndRoles = wrapError(() =>
             distributeRoles(players, roleGroups.classic));

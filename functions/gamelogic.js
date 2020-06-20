@@ -253,7 +253,7 @@ class NightRound extends GameRound {
             // we are mapping to the server side roles here too as these
             // contain the proirity and process functions that are not
             // serialised to the db
-            const roleTpe = this.roleMap[player].type;
+            const roleType = this.roleMap[player].type;
             acc[roleType] = roles[roleType];
             return acc;
         }, {});

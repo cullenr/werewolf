@@ -27,44 +27,45 @@ module.exports = {
             .collection(clean`games/${gameId}/players`)
             .listDocuments()
             .then(res => res.map(e => e.id));
-    }
+    },
     getRoles(gameId) {
         return db
             .collection(clean`games/${gameId}/roles`)
             .get();
-    }
+    },
     getLatestRound(gameId) {
         return db
             .collection(clean`games/${gameId}/rounds`)
             .orderBy('number', 'desc')
             .limit(1)
             .get();
-    }
+    },
     addRound(gameId, type, players, ghosts, number) {
         return db
             .doc(clean`games/${gameId}/rounds/r${number}`)
             .set({ type, players, ghosts, number });
-    }
+    },
     addRole(gameId, playerId, type, team) {
         return db
             .doc(clean`games/${gameId}/roles/${playerId}`)
             .set({ type, team });
-    }
+    },
     addVote(gameId, playerId, roundId, nominee, viewers) {
         return db
-            .doc(clean`games/${gameId}/rounds/${roundId}/votes/${playerId}`)
-            .set({ nominee, viewers });
-    }
+            .doc(clean`games/${gameId}/votes/${playerId}`)
+            .set({ nominee, viewers, roundId });
+    },
     getVotes(gameId, roundId) {
         return db
-            .collection(clean`games/${gameId}/rounds/${roundId}/votes`)
+            .collection(clean`games/${gameId}/votes`)
+            .where('roundId', '==', roundId)
             .get();
-    }
+    },
     addMessages(gameId, messages) {
         const collection = db.collection(clean`games/${gameId}/messages`)
         const promises   = messages.map(collection.add);
         return Promise.all(promises);
-    }
+    },
     closeGame(gameId) {
         return db.doc(clean`games/${gameId}`).update({isOpen: false});
     }

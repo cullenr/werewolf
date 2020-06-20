@@ -54,7 +54,7 @@ service cloud.firestore {
       // votes are added via the 'vote' rpc. The vote document contains a list 
       // of players allowed to see its contents which changes every round. This 
       // list can only be set by the cloud functions to stop cheaters!
-      match /rounds/{round}/votes/{userId} {
+      match /votes/{userId} {
         allow read: if request.auth.uid in resource.data.viewers;
         allow write: if false;
       }
