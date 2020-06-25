@@ -199,7 +199,7 @@ describe('class GameRound', () => {
 
             assert.equal(messages.length, 2);
             assert.includeDeepMembers(messages, [{
-                to: ['p1', 'p3'],
+                viewers: ['p1', 'p3'],
                 type:'test',
                 content: 'value'
             }]);
@@ -211,7 +211,7 @@ describe('class GameRound', () => {
 
             assert.equal(messages.length, 2);
             assert.includeDeepMembers(messages, [{
-                to: ['p1', 'p3', 'p4'],
+                viewers: ['p1', 'p3', 'p4'],
                 type:'test',
                 content: 'value'
             }]);
@@ -231,7 +231,7 @@ describe('class GameRound', () => {
 
             assert.equal(messages.length, 2);
             assert.includeDeepMembers(messages, [{
-                to: ['p1', 'p2', 'p3'],
+                viewers: ['p1', 'p2', 'p3'],
                 type:'test',
                 content: 'value'
             }]);
@@ -243,7 +243,7 @@ describe('class GameRound', () => {
 
             assert.equal(messages.length, 2);
             assert.includeDeepMembers(messages, [{
-                to: ['p1', 'p2', 'p3', 'p4'],
+                viewers: ['p1', 'p2', 'p3', 'p4'],
                 type:'test',
                 content: 'value'
             }]);
@@ -252,7 +252,7 @@ describe('class GameRound', () => {
 });
 
 describe('Werewolf night rounds', () => {
-    describe('produces messages notifying', () => {
+    describe.only('produces messages notifying', () => {
         it('selection of an executioner (dead or alive!)', () => {
             const players = ['p1', 'p2', 'p3', 'p4', 'p5'];
             const ghosts = [];
@@ -277,9 +277,9 @@ describe('Werewolf night rounds', () => {
             // dead - this is a bug and should be addressed when we allow ghosts
             // to vote - this will give the ghosts an oppertunity to do somthing
             assert.includeDeepMembers(messages, [{
-                to: ['p1', 'p2', 'p3', 'p4', 'p5'],
+                viewers: ['p1', 'p2', 'p3', 'p4', 'p5'],
                 type:'executioner-elected',
-                content: ['p2', 2]
+                content: 'p2'
             }]);
         });
 
@@ -304,7 +304,7 @@ describe('Werewolf night rounds', () => {
             const messages = round.messages;
 
             assert.includeDeepMembers(messages, [{
-                to: ['p1', 'p2', 'p3', 'p4', 'p5'],
+                viewers: ['p1', 'p2', 'p3', 'p4', 'p5'],
                 type:'eliminations',
                 content: ['p2', 'p3']
             }]);
@@ -330,7 +330,7 @@ describe('Werewolf night rounds', () => {
             const messages = round.messages;
 
             assert.includeDeepMembers(messages, [{
-                to: ['p1', 'p2', 'p3', 'p4', 'p5'],
+                viewers: ['p1', 'p2', 'p3', 'p4', 'p5'],
                 type:'resurections',
                 content: ['p3']
             }]);
@@ -356,7 +356,7 @@ describe('Werewolf night rounds', () => {
             const messages = round.messages;
 
             assert.includeDeepMembers(messages, [{
-                to: ['p2', 'p3', 'p6', 'p7'],
+                viewers: ['p2', 'p3', 'p6', 'p7'],
                 type:'seer-success',
                 content: 'p1'
             }]);
@@ -382,7 +382,7 @@ describe('Werewolf night rounds', () => {
             const messages = round.messages;
 
             assert.includeDeepMembers(messages, [{
-                to: ['p2', 'p3', 'p6', 'p7'],
+                viewers: ['p2', 'p3', 'p6', 'p7'],
                 type:'seer-failure',
                 content: 'p3'
             }]);
@@ -414,7 +414,7 @@ describe('Werewolf daytime rounds', () => {
 
             const message = messages[0];
             assert.equal(message.type, 'vote-draw');
-            assert.includeDeepMembers(message.to, [
+            assert.includeDeepMembers(message.viewers, [
                 'p1', 'p2', 'p3', 'p4'
             ]);
             assert.includeDeepMembers(message.content, [
@@ -444,7 +444,7 @@ describe('Werewolf daytime rounds', () => {
 
             const message = messages[0];
             assert.equal(message.type, 'execution');
-            assert.includeDeepMembers(message.to, [
+            assert.includeDeepMembers(message.viewers, [
                 'p1', 'p2', 'p3', 'p4'
             ]);
             assert.deepEqual(message.content, {
