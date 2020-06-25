@@ -33,14 +33,8 @@ service cloud.firestore {
       // the player doc is public.
       match /players/{userId} {
         allow read: if isAnyUser();
-        allow write: if false;
-        // override create
-        // full write is not granted, this would allow a user to replace
-        // themselves with another.
-        // TODO: make this host accesible only, they will be sent a message 
-        // on the message bus requesting access for a user where they can 
-        // grant access. For now users add themselves.
-        allow create: if isUser(userId) && isGameOpen();
+        // this needs to be made a bit stricter, right now players can revive themselves - really players should be added through an rpc
+        allow write: if isUser(userId);
       }
 
       // rounds are created by cloud functions
