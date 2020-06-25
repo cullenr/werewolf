@@ -1,3 +1,6 @@
+const functions = require('firebase-functions');
+const game = require('./gamelogic.js');
+
 function checkAuth(context) {
     if (!context.auth) {
         throw new functions.https.HttpsError('failed-precondition', 
@@ -21,7 +24,7 @@ function checkArrayParam(data, prop) {
 
 function wrapError(func) {
     try {
-        func()
+        return func()
     } catch(err) {
         throw new functions.https.HttpsError('invalid-argument', err.message);
     }
@@ -52,15 +55,20 @@ const startGame = da => (async (data, context) => {
     const gameId          = data.gameId;
     const players         = await da.listPlayersIds(gameId);
     const playersAndRoles = wrapError(() =>
-            distributeRoles(players, roleGroups.classic));
+            game.distributeRoles(players, game.roleGroups.classic));
 
     // we cannot guarantee that we will be able to stay within the batch db
     // operation limit given that there are unknown number of players. Because
     // of this we will not use a transaction or batch to start the game.
     await da.closeGame(gameId);
 
-    const rolesPromises = playersAndRoles.map(e => {
-        return da.addRole(gameId, e.player, e.role)
+    const rolesPromises = playersAndRoles.map(async e => {
+        await da.addRole(gameId, e.player, e.role.type, e.role.team)
+        await da.addMessages(gameId, [{
+            type: 'role-assigned',
+            viewers: [e.player],
+            content: e.role.type
+        }]);
     });
     await Promise.all(rolesPromises);
 
@@ -91,7 +99,7 @@ const castVote = da => (async (data, context) => {
     const players = round.data().players;
     const ghosts  = round.data().ghosts || [];
     // check if the voter is allwed to vote
-    if(!players.contains(uid)) {
+    if(!players.includes(uid)) {
         throw new functions.https.HttpsError('failed-precondition',
                 'user is not allowed to vote on this round.');
     }
@@ -101,24 +109,25 @@ const castVote = da => (async (data, context) => {
 
     // check if this was the last vote - this is a small collection so this
     // approach is not too bad.
-    const votes = da.getVotes(gameId, round.id);
+    const votes = await da.getVotes(gameId, round.id);
     if(votes.size === players.length) {
         const roles     = await da.getRoles(data.gameId);
         const rolesMap  = querySnapshotToMap(roles);
         const votesMap  = querySnapshotToMap(votes);
         const roundType = round.data().type;
-        const gamelogic = roundType === 'night'
-                ? new game.NightRound(players, ghosts, rolesMap, votesMap)
-                : new game.DayRound(players, ghosts, rolesMap, votesMap);
+        const results = roundType === 'night'
+                ? new game.NightRound(players, ghosts, votesMap, rolesMap)
+                : new game.DayRound(players, ghosts, votesMap, rolesMap);
 
         // add all the events of the day/night to the game message bus
-        await da.addMessages(gameId, gamelogic.messages);
+        await da.addMessages(gameId, results.messages);
 
         // start a new round if we do not have a gameover
-        if(!gamelogic.gameover) {
+        if(!results.gameover) {
             const nextPhase = roundType === 'night' ? 'day' : 'night';
             const nextNumber = parseInt(round.data().number) + 1;
-            da.addRound(gameId, nextPhase, players, ghosts, nextNumber);
+            da.addRound(gameId, nextPhase, 
+                    results.players, results.ghosts, nextNumber);
         }
     }
 });

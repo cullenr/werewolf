@@ -168,7 +168,7 @@ class GameRound {
     addPublicMessage(type, content) {
         // we sort the array to make testing easier
         const allPlayers = this.players.concat(this.ghosts).sort();
-        this.publicMessages.push({ to: allPlayers, type, content });
+        this.publicMessages.push({ viewers: allPlayers, type, content });
     }
 
     checkWinners() {
@@ -194,7 +194,7 @@ class GameRound {
 
     get messages() {
         const pms = this.privateMessages.map(e => ({
-            to: this.ghosts.concat(e.to).sort(), // sort for easier testings
+            viewers: this.ghosts.concat(e.to).sort(), // sort for easier testings
             type: e.type,
             content: e.content
         }));
@@ -210,7 +210,8 @@ class DayRound extends GameRound {
     update() {
         const votesArr = Object.values(this.voteMap).map(e => e.nominee);
         const results = this.scorePoll(votesArr);
-        if(results[0][1] === results[1][1]) {
+        if( (results.length > 1) && 
+            (results[0][1] === results[1][1])) {
             this.addPublicMessage('vote-draw', results);
         } else {
             this.eliminate(results[0][0])
@@ -272,7 +273,7 @@ class NightRound extends GameRound {
         const goodVotes = goodPlayers
             .map(e => this.voteMap[e].nominee);
         const results = this.scorePoll(goodVotes);
-        return results[0];
+        return results[0][0]; // results is 2d. d1<player id>, d2<num votes>
     }
 
     getNominations(roleName) {

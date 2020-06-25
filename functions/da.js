@@ -38,7 +38,8 @@ module.exports = {
             .collection(clean`games/${gameId}/rounds`)
             .orderBy('number', 'desc')
             .limit(1)
-            .get();
+            .get()
+            .then(querySnapshot => querySnapshot.docs[0]);
     },
     addRound(gameId, type, players, ghosts, number) {
         return db
@@ -63,7 +64,7 @@ module.exports = {
     },
     addMessages(gameId, messages) {
         const collection = db.collection(clean`games/${gameId}/messages`)
-        const promises   = messages.map(collection.add);
+        const promises   = messages.map(collection.add.bind(collection));
         return Promise.all(promises);
     },
     closeGame(gameId) {
