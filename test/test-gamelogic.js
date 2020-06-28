@@ -252,7 +252,7 @@ describe('class GameRound', () => {
 });
 
 describe('Werewolf night rounds', () => {
-    describe.only('produces messages notifying', () => {
+    describe('produces messages notifying', () => {
         it('selection of an executioner (dead or alive!)', () => {
             const players = ['p1', 'p2', 'p3', 'p4', 'p5'];
             const ghosts = [];
@@ -335,6 +335,32 @@ describe('Werewolf night rounds', () => {
                 content: ['p3']
             }]);
         });
+        it('self resurection of players', () => {
+            const players = ['p1', 'p2', 'p3', 'p4', 'p5'];
+            const ghosts = [];
+            const voteMap = {
+                p1: {nominee: 'p2'},
+                p2: {nominee: 'p2'},
+                p3: {nominee: 'p2'},
+                p4: {nominee: 'p2'},
+                p5: {nominee: 'p2'},
+            };
+            const roleMap = {
+                p1: {type: 'WEREWOLF', team: 'bad'},
+                p2: {type: 'HEALER',   team: 'good'},
+                p3: {type: 'VILLAGER', team: 'good'},
+                p4: {type: 'VILLAGER', team: 'good'},
+                p5: {type: 'VILLAGER', team: 'good'},
+            };
+            const round = new game.NightRound(players, ghosts, voteMap, roleMap);
+            const messages = round.messages;
+
+            assert.includeDeepMembers(messages, [{
+                viewers: ['p1', 'p2', 'p3', 'p4', 'p5'],
+                type:'resurections',
+                content: ['p2']
+            }]);
+        });
         it('seers successful identification of enemies', () => {
             const players = ['p1', 'p2', 'p3', 'p4', 'p5'];
             const ghosts = ['p6', 'p7'];
@@ -351,6 +377,8 @@ describe('Werewolf night rounds', () => {
                 p3: {type: 'VILLAGER', team: 'good'},
                 p4: {type: 'VILLAGER', team: 'good'},
                 p5: {type: 'VILLAGER', team: 'good'},
+                p6: {type: 'VILLAGER', team: 'good'},
+                p7: {type: 'VILLAGER', team: 'good'},
             };
             const round = new game.NightRound(players, ghosts, voteMap, roleMap);
             const messages = round.messages;
@@ -377,6 +405,8 @@ describe('Werewolf night rounds', () => {
                 p3: {type: 'VILLAGER', team: 'good'},
                 p4: {type: 'VILLAGER', team: 'good'},
                 p5: {type: 'VILLAGER', team: 'good'},
+                p6: {type: 'VILLAGER', team: 'good'},
+                p7: {type: 'VILLAGER', team: 'good'},
             };
             const round = new game.NightRound(players, ghosts, voteMap, roleMap);
             const messages = round.messages;

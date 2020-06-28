@@ -277,12 +277,18 @@ class NightRound extends GameRound {
     }
 
     getNominations(roleName) {
-        return this.players
+        // TODO : fix this, this is a total hack to allow healers to self
+        // revive.
+        const f = this.players.concat(this.ghosts) // make a a getter for this
             .filter(player => this.roleMap[player].type === roleName)
-            .map(player => ({
+            .filter(player => this.voteMap[player] != null) // HACK: check if the player was alive this round by verifying they were able to vote. Ghsts cannot vote. The player may have JUST become a ghost by a werewolf slaying them, we need to allow them to self revive.
+        const m = f.map(player => ({
                 voter: player,
                 nominee: this.voteMap[player].nominee
             }))
+
+        console.log(this.players, roleName, f, m)
+        return m;
     }
 }
 
